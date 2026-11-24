@@ -1,0 +1,53 @@
+{
+  "name": "dsh-eli5x",
+  "version": "0.1.0",
+  "description": "ELI5X (Explain Like I'm 5, eXtended) skill for DeepSeek Harness: turns complex technical or product material into a self-contained, animated HTML explainer for non-technical readers, with a fact ledger and headless-Chrome verification of layout, text overlap, and per-viewport overflow.",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "skill",
+    "eli5",
+    "explainer",
+    "documentation",
+    "html",
+    "visualization"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "dsh": ">=0.2.1-rc.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "lib",
+    "scripts",
+    "assets",
+    "references",
+    "SKILL.md",
+    "README.md",
+    "cordis.patch.yml",
+    "LICENSE"
+  ],
+  "scripts": {
+    "verify": "node scripts/verify.mjs assets/eli5x-template.html"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xishaochen/dsh-eli5x.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

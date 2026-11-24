@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>【标题】</title>
+<!--
+  ELI5X 起步模板
+  用法：复制本文件 → 替换 {{...}} 占位 → 按 references/structure.md 逐段填内容
+  数据驱动：只改 SEG_OUT / SEG_BACK 两个数组即可增删动画阶段，不要改动画逻辑
+  验收：node scripts/verify.mjs <本文件>
+-->
+<style>
+  :root{
+    --paper:#f6f4ef; --card:#fffdfa;
+    --ink:#1b1a18; --ink2:#57534c; --ink3:#8d877d;
+    --line:#e3ded4; --line2:#cfc8ba;
+    --accent:#b4520a; --accent-soft:#fbeee0;
+    --teal:#0e6b62; --teal-soft:#e6f1ef;
+    --shadow:0 1px 2px rgba(40,34,24,.04), 0 8px 24px -16px rgba(40,34,24,.18);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font:16.5px/1.78 system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:800px;margin:0 auto;padding:0 24px 140px}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(180,82,10,.3)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;background:#f0ece3;padding:.12em .38em;border-radius:4px;color:#4a443b}
+
+  .hero{padding:88px 0 56px;border-bottom:1px solid var(--line);margin-bottom:64px}
+  .kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 22px}
+  h1{font-size:clamp(28px,4.6vw,42px);line-height:1.28;margin:0 0 26px;letter-spacing:-.015em;font-weight:800}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{font-size:18.5px;line-height:1.72;color:var(--ink2);margin:0;max-width:660px}
+  .lede strong{color:var(--ink);font-weight:650}
+
+  section{margin:0 0 76px}
+  .secno{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink3);letter-spacing:.1em;margin-bottom:10px}
+  h2{font-size:clamp(22px,3.2vw,27px);line-height:1.42;margin:0 0 8px;letter-spacing:-.01em;font-weight:750}
+  h3{font-size:17.5px;margin:36px 0 10px;font-weight:700}
+  p{margin:0 0 18px}
+  .sub{color:var(--ink3);font-size:14.5px;margin:0 0 30px}
+
+  figure{margin:34px 0 10px}
+  .figbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 14px 10px;box-shadow:var(--shadow);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  figure svg{display:block;width:100%;height:auto}
+  .swipe{display:none}
+  /* 需 ≥1160px 才放得下外扩：800 正文栏 + 160×2 */
+  @media (min-width:1160px){ figure.wide{margin-left:-160px;margin-right:-160px} }
+  figcaption{font-size:13px;color:var(--ink3);margin-top:12px;line-height:1.6;padding-left:2px}
+
+  .note{background:var(--accent-soft);border-left:3px solid var(--accent);padding:16px 20px;border-radius:0 10px 10px 0;margin:26px 0;font-size:15.5px;line-height:1.72}
+  .note b{color:var(--accent)}
+  .note.teal{background:var(--teal-soft);border-left-color:var(--teal)}
+  .note.teal b{color:var(--teal)}
+
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:30px 0}
+  .cmp{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow)}
+  .cmp .tag{font-size:12px;letter-spacing:.08em;color:var(--ink3);margin-bottom:8px}
+  .cmp .big{font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:600;line-height:1.2}
+  .cmp.bad .big{color:#a33b31}
+  .cmp.good .big{color:var(--teal)}
+  .cmp .exp{font-size:13.5px;color:var(--ink2);margin-top:10px;line-height:1.6}
+
+  .gates{margin:30px 0 0;display:flex;flex-direction:column;gap:10px}
+  details.gate{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+  details.gate[open]{border-color:var(--line2)}
+  details.gate>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:baseline;gap:14px}
+  details.gate>summary::-webkit-details-marker{display:none}
+  details.gate>summary:hover{background:#fbf9f4}
+  .gnum{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#fff;background:var(--accent);border-radius:5px;padding:2px 7px;flex:0 0 auto;transform:translateY(-1px)}
+  .gname{font-weight:700;font-size:16px;flex:0 0 auto}
+  .ghint{color:var(--ink3);font-size:14px;flex:1 1 auto}
+  .gchev{color:var(--ink3);font-size:13px;flex:0 0 auto;transition:transform .2s}
+  details.gate[open] .gchev{transform:rotate(180deg)}
+  .gbody{padding:2px 20px 20px;border-top:1px solid var(--line)}
+  .gbody dl{margin:16px 0 0;font-size:15px;line-height:1.72}
+  .gbody dt{color:var(--ink3);font-size:12.5px;letter-spacing:.06em;margin-top:14px}
+  .gbody dt:first-child{margin-top:0}
+  .gbody dd{margin:3px 0 0;color:var(--ink2)}
+  .gbody dd strong{color:var(--ink);font-weight:650}
+
+  .tablewrap{overflow-x:auto;margin:28px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+  th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f9f6f0;font-size:12.5px;letter-spacing:.05em;color:var(--ink2);font-weight:650}
+  tr:last-child td{border-bottom:none}
+  td:first-child{white-space:nowrap;color:var(--ink);font-weight:600}
+  td:last-child{color:var(--ink2)}
+
+  .closing{background:#20201d;color:#f0ece2;border-radius:16px;padding:40px 36px;margin:80px 0 0}
+  .closing h2{color:#fff;margin-bottom:18px;font-size:23px}
+  .closing p{color:#b8b2a5;margin-bottom:14px;font-size:15.5px}
+  .closing p:last-child{margin-bottom:0}
+  .closing strong{color:#f5c99a;font-weight:650}
+  .closing .q{font-size:17px;color:#efe9dc;border-left:2px solid #f5c99a;padding-left:18px;margin:24px 0 0}
+
+  .mapbar{display:flex;align-items:flex-start;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .mapbar button{font:inherit;font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--line2);background:var(--card);color:var(--ink2);cursor:pointer;flex:0 0 auto}
+  .mapbar button:hover:not(:disabled){background:#fbf7f0;border-color:var(--accent);color:var(--accent)}
+  .mapbar button:disabled{opacity:.45;cursor:default}
+  .mapcap{flex:1 1 260px;min-width:200px;font-size:14px;line-height:1.62;color:var(--ink2)}
+  .mapcap b{display:block;color:var(--ink);font-size:14.5px;margin-bottom:3px;font-weight:700}
+  #flowmap .node rect{transition:fill .22s ease,stroke .22s ease}
+  #flowmap .node text{transition:fill .22s ease}
+  #flowmap .node.on rect{fill:#fbeee0;stroke:#b4520a}
+  #flowmap .node.on text{fill:#7a360a}
+
+  .rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  .rv.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){ .rv{opacity:1;transform:none;transition:none} }
+
+  @media (max-width:640px){
+    figure svg{min-width:700px}
+    .swipe{display:inline;color:var(--accent);font-weight:600}
+    .hero{padding:56px 0 40px;margin-bottom:48px}
+    .lede{font-size:17px}
+    .compare{grid-template-columns:1fr}
+    .closing{padding:30px 22px}
+    .gname{font-size:15px}
+    .ghint{display:none}
+    .wrap{padding:0 18px 100px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ===== 00 结论 + 主类比 ===== -->
+<header class="hero">
+  <p class="kicker">{{栏目 / 主题}}</p>
+  <h1>{{反直觉的判断，可用 <em>强调色</em> 强调关键词}}</h1>
+  <p class="lede">{{一句话结论 + 主类比登场 + 为什么选它}}</p>
+</header>
+
+<!-- ===== 01 问题有多痛（用乘法/量级算出来）===== -->
+<section class="rv">
+  <span class="secno">01</span>
+  <h2>{{把为什么需要这层，变成算术}}</h2>
+  <p>{{问题描述}}</p>
+
+  <div class="compare">
+    <div class="cmp bad">
+      <div class="tag">没有中间层</div>
+      <div class="big">A × B = N</div>
+      <div class="exp">{{为什么是乘法级的工作量}}</div>
+    </div>
+    <div class="cmp good">
+      <div class="tag">加一层</div>
+      <div class="big">A + B = M</div>
+      <div class="exp">{{为什么加法不会爆炸}}</div>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>差异维度</th><th>谁在用</th><th>麻烦在哪</th></tr></thead>
+      <tbody>
+        <tr><td>{{维度1}}</td><td>{{…}}</td><td>{{…}}</td></tr>
+        <tr><td>{{维度2}}</td><td>{{…}}</td><td>{{…}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 02-05 逐层拆：每层三问 ===== -->
+<section class="rv">
+  <span class="secno">02</span>
+  <h2>{{这一层叫什么，比喻成什么}}</h2>
+  <p class="sub">{{一句话定位}}</p>
+
+  <div class="gates">
+    <details class="gate">
+      <summary><span class="gnum">01</span><span class="gname">{{层名}}</span><span class="ghint">{{一句话钩子}}</span><span class="gchev">▾</span></summary>
+      <div class="gbody">
+        <dl>
+          <dt>外行版</dt><dd>{{一句话，不出现术语}}</dd>
+          <dt>没它会怎样</dt><dd>{{具体到谁在什么场景遇到什么，不要写"影响稳定性"}}</dd>
+          <dt>技术上</dt><dd>{{机制与取舍，可用 <strong>加粗</strong> 标关键判断}}</dd>
+        </dl>
+      </div>
+    </details>
+    <!-- 更多层复制上面的 details -->
+  </div>
+
+  <div class="note teal">
+    <b>顺序不是随便排的。</b>{{解释顺序背后的成本/风险逻辑}}
+  </div>
+</section>
+
+<!-- ===== 06 术语对照表 ===== -->
+<section class="rv">
+  <span class="secno">06</span>
+  <h2>一张表，转成外行话</h2>
+  <p class="sub">给不写代码的同事讲时，可以直接照着念。</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>文里的名字</th><th>它到底在干什么</th></tr></thead>
+      <tbody>
+        <tr><td>{{真实专有名词}}</td><td>{{外行话}}</td></tr>
+        <!-- 必须覆盖全文所有专有名词；每个名字都要在 07 动态图上可高亮 -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 07 动态全局图 ===== -->
+<section class="rv" id="globalmap" data-anim-section>
+  <span class="secno">07</span>
+  <h2>全局动态图：一次请求走完全程</h2>
+  <p class="sub">把前面几节串起来。点播放，跟着那个小点走一遍——去程是请求，回程是响应。</p>
+
+  <figure class="wide">
+    <div class="figbox">
+      <svg id="flowmap" viewBox="0 0 920 300" role="img" aria-label="{{图的无障碍描述：谁经过什么到达哪里}}">
+        <defs>
+          <marker id="fa" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#cfc8ba"/>
+          </marker>
+          <filter id="pglow" x="-250%" y="-250%" width="600%" height="600%">
+            <feGaussianBlur stdDeviation="3.2" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- 回程：另一条路线，不要和去程共用 -->
+        <path id="backTrack" d="M 835 150 V 240 H 105 V 150" fill="none" stroke="#e2dbcd" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#fa)"/>
+        <path id="backProg" d="M 835 150 V 240 H 105 V 150" fill="none" stroke="#0e6b62" stroke-width="2.2"/>
+        <text x="466" y="262" font-size="11.5" fill="#8d877d" text-anchor="middle">回程：{{回程与去程的本质差异}}</text>
+
+        <!-- 去程 -->
+        <path id="outTrack" d="M 120 110 H 800" fill="none" stroke="#e2dbcd" stroke-width="3" marker-end="url(#fa)"/>
+        <path id="outProg" d="M 120 110 H 800" fill="none" stroke="#b4520a" stroke-width="3"/>
+
+        <!-- 节点：id 要与 SEG 数组里的 ids 对应 -->
+        <g class="node" id="n1"><rect x="60" y="60" width="120" height="40" rx="9" fill="#f6f3ea" stroke="#ded8cc"/><text x="120" y="85" font-size="11" font-weight="700" fill="#33302a" text-anchor="middle">{{节点1}}</text></g>
+        <g class="node" id="n2"><rect x="230" y="60" width="120" height="40" rx="9" fill="#f6f3ea" stroke="#ded8cc"/><text x="290" y="85" font-size="11" font-weight="700" fill="#33302a" text-anchor="middle">{{节点2}}</text></g>
+        <g class="node" id="n3"><rect x="400" y="60" width="120" height="40" rx="9" fill="#f6f3ea" stroke="#ded8cc"/><text x="460" y="85" font-size="11" font-weight="700" fill="#33302a" text-anchor="middle">{{节点3}}</text></g>
+        <g class="node" id="n4"><rect x="570" y="60" width="120" height="40" rx="9" fill="#f6f3ea" stroke="#ded8cc"/><text x="630" y="85" font-size="11" font-weight="700" fill="#33302a" text-anchor="middle">{{节点4}}</text></g>
+        <g class="node" id="n5"><rect x="740" y="60" width="120" height="40" rx="9" fill="#f6f3ea" stroke="#ded8cc"/><text x="800" y="85" font-size="11" font-weight="700" fill="#33302a" text-anchor="middle">{{节点5}}</text></g>
+
+        <circle id="packet" cx="120" cy="110" r="5.5" fill="#b4520a" filter="url(#pglow)"/>
+      </svg>
+    </div>
+
+    <div class="mapbar">
+      <button id="mplay" type="button">暂停</button>
+      <button id="mreplay" type="button">重放</button>
+      <div class="mapcap"><b id="mcapT">出发</b><span id="mcapD">{{起始说明}}</span></div>
+    </div>
+
+    <figcaption>{{去程做什么、回程做什么，以及为什么画成两条线}}</figcaption>
+  </figure>
+
+  <div class="note teal">
+    <b>看这张图时注意两件事。</b>{{提示1：去程与回程难点不同}} {{提示2：谁在这张图里始终不变}}
+  </div>
+</section>
+
+<!-- ===== 08 凭什么算 X 级 + 一句话收尾 ===== -->
+<section class="rv">
+  <span class="secno">08</span>
+  <h2>所以它凭什么算「{{X}}级」</h2>
+  <div class="tablewrap">
+    <table>
+      <tbody>
+        <tr><td>{{硬指标1}}</td><td>{{为什么这条难}}</td></tr>
+        <tr><td>{{硬指标2}}</td><td>{{…}}</td></tr>
+        <tr><td>{{硬指标3}}</td><td>{{…}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="closing">
+    <h2>如果只记一句话</h2>
+    <p>{{它真正解决的不是显而易见的那个问题}}</p>
+    <p>{{而是：<strong>核心判断</strong>}}</p>
+    <p class="q">{{可被复述的一句话，两行以内}}</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+/* 渐入 */
+(function(){
+  var els = document.querySelectorAll('.rv');
+  if(!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    els.forEach(function(e){ e.classList.add('in'); }); return;
+  }
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  },{rootMargin:'0px 0px -8% 0px',threshold:0.06});
+  els.forEach(function(e){ io.observe(e); });
+})();
+</script>
+<script>
+/* 路径动画：只改 SEG_OUT / SEG_BACK，不改下面的逻辑 */
+(function(){
+  var svg = document.getElementById('flowmap');
+  if(!svg || !svg.querySelector) return;
+  var outProg  = svg.querySelector('#outProg');
+  var backProg = svg.querySelector('#backProg');
+  var dot      = svg.querySelector('#packet');
+  var capT     = document.getElementById('mcapT');
+  var capD     = document.getElementById('mcapD');
+  var btnP     = document.getElementById('mplay');
+  var btnR     = document.getElementById('mreplay');
+  var nodes    = svg.querySelectorAll('.node');
+  if(!outProg || !backProg || !dot) return;
+
+  var OUT  = outProg.getTotalLength();
+  var BACK = backProg.getTotalLength();
+  outProg.style.strokeDasharray  = OUT + ' ' + OUT;
+  backProg.style.strokeDasharray = BACK + ' ' + BACK;
+
+  /* x = 沿去程的进度阈值（起点 120）；ids = 该阶段高亮的节点，可多个 */
+  var SEG_OUT = [
+    {x:120, t:'出发', d:'{{…}}', ids:['n1']},
+    {x:290, t:'{{阶段2}}', d:'{{…}}', ids:['n2']},
+    {x:460, t:'{{阶段3}}', d:'{{…}}', ids:['n3']},
+    {x:630, t:'{{阶段4}}', d:'{{…}}', ids:['n4']},
+    {x:800, t:'{{到达}}', d:'{{…}}', ids:['n5']}
+  ];
+
+  /* t = 回程进度 0~1 */
+  var SEG_BACK = [
+    {t:0,    tt:'{{回程1}}', d:'{{…}}', ids:['n5']},
+    {t:0.4,  tt:'{{回程2}}', d:'{{…}}', ids:['n4']},
+    {t:0.85, tt:'{{回程3}}', d:'{{…}}', ids:['n2','n1']}
+  ];
+
+  var phase = 1, dist = 0, last = 0, paused = false, hold = 0, started = false;
+  var SPEED = 0.15, curCap = '';
+
+  function setOn(ids){
+    for(var i=0;i<nodes.length;i++) nodes[i].classList.remove('on');
+    if(!ids) return;
+    for(var j=0;j<ids.length;j++){ var e = svg.querySelector('#'+ids[j]); if(e) e.classList.add('on'); }
+  }
+  function cap(t,d){
+    var k = t + '|' + d; if(k === curCap) return; curCap = k;
+    if(capT) capT.textContent = t; if(capD) capD.textContent = d;
+  }
+  function place(pt){ dot.setAttribute('cx', pt.x.toFixed(1)); dot.setAttribute('cy', pt.y.toFixed(1)); }
+
+  function draw(){
+    if(phase === 1){
+      var d1 = Math.min(dist, OUT);
+      outProg.style.strokeDashoffset = (OUT - d1);
+      place(outProg.getPointAtLength(d1));
+      var x = 120 + d1, seg = SEG_OUT[0];
+      for(var i=0;i<SEG_OUT.length;i++) if(x >= SEG_OUT[i].x) seg = SEG_OUT[i];
+      setOn(seg.ids); cap(seg.t, seg.d);
+    } else {
+      var d2 = Math.min(dist, BACK);
+      backProg.style.strokeDashoffset = (BACK - d2);
+      place(backProg.getPointAtLength(d2));
+      var tt = d2 / BACK, s2 = SEG_BACK[0];
+      for(var k=0;k<SEG_BACK.length;k++) if(tt >= SEG_BACK[k].t) s2 = SEG_BACK[k];
+      setOn(s2.ids); cap(s2.tt, s2.d);
+    }
+  }
+  function reset(){
+    phase = 1; dist = 0; last = 0; hold = 0; curCap = '';
+    outProg.style.strokeDashoffset = OUT; backProg.style.strokeDashoffset = BACK;
+    dot.setAttribute('cx','120'); dot.setAttribute('cy','110');
+    setOn(SEG_OUT[0].ids); cap(SEG_OUT[0].t, SEG_OUT[0].d);
+  }
+  function frame(ts){
+    if(!last) last = ts;
+    var dt = ts - last; last = ts; if(dt > 120) dt = 120;
+    if(!paused){
+      if(hold > 0){ hold -= dt; if(hold <= 0) reset(); }
+      else {
+        dist += dt * SPEED;
+        if(phase === 1 && dist >= OUT){ phase = 2; dist = 0; }
+        else if(phase === 2 && dist >= BACK){ dist = BACK; hold = 1200; }
+      }
+      draw();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    outProg.style.strokeDashoffset = 0; backProg.style.strokeDashoffset = 0;
+    dot.style.display = 'none'; setOn(['n3']);
+    cap('动画已关闭','系统开启了「减少动态效果」。完整路径已画出。');
+    if(btnP) btnP.disabled = true; if(btnR) btnR.disabled = true;
+    return;
+  }
+
+  reset();
+  if(btnP) btnP.addEventListener('click', function(){
+    paused = !paused; btnP.textContent = paused ? '播放' : '暂停'; if(!paused) last = 0;
+  });
+  if(btnR) btnR.addEventListener('click', function(){
+    reset(); paused = false; if(btnP) btnP.textContent = '暂停';
+  });
+
+  if('IntersectionObserver' in window){
+    var mio = new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if(en.isIntersecting && !started){ started = true; last = 0; requestAnimationFrame(frame); mio.disconnect(); }
+      });
+    },{threshold:0.12});
+    mio.observe(svg);
+  } else { requestAnimationFrame(frame); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# 凭证与运行产物不进仓库（config/key.env、config/aihub.env、.cache/、output/）
+config/
+.cache/
+output/
+*.log
+*.pyc
+__pycache__/
+.DS_Store
+*.tgz
